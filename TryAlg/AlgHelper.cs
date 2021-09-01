@@ -1,0 +1,195 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+namespace TryAlg
+{
+    public class AlgHelper
+    {
+        #region 計算總分
+        /// <summary>
+        /// 計算總分
+        /// </summary>
+        /// <param name="userInfo"></param>
+        /// <param name="algP"></param>
+        /// <returns></returns>
+        public static double GetTotalScore(UserInfo userInfo, AlgorithmParameter algP)
+        {
+            int ansAge = GetAgeScore(userInfo.Age, algP.age_targetAgeButtom, algP.age_targetAgeTop, algP.age_direction);
+            double ansJob = GetJobScore(userInfo.Job, algP.job_dict);
+            double ansState = GetStateWeight(userInfo.Status, algP.state_dict);
+            int ansOrdinal = GetOrdinalScore(userInfo.DoseCount, algP.ordinal_dict);
+            var Area = CityModel.CreateCityModel();
+            var ansArea = GetAreaScore(userInfo.Area, algP.area_area, Area);
+
+
+            //return ansArea;
+            return (ansAge + ansJob + ansOrdinal) * ansState * ansArea;
+        }
+        #endregion
+
+        #region 計算個別分數
+        /// <summary>
+        /// 計算年齡分數
+        /// </summary>
+        /// <param name="age">民眾年齡</param>
+        /// <param name="targetAgeButtom">目標年齡層-底(預設0)</param>
+        /// <param name="targetAgeTop">目標年齡層-頂(預設100)</param>
+        /// <param name="direction">小的先/老的先(0/1)(預設1)</param>
+        /// <param name="limit">滿分(預設100)</param>
+        /// <returns></returns>
+        public static int GetAgeScore(int age, int targetAgeButtom = 0, int targetAgeTop = 100, int direction = 1, int limit = 100)
+        {
+            int answer = 0;
+            if (age >= targetAgeButtom && age <= targetAgeTop)
+            {
+                switch (direction)
+                {
+                    case 0:
+                        answer = limit - (age - targetAgeButtom);
+                        break;
+                    case 1:
+                        answer = limit - (targetAgeTop - age);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            else if (age > targetAgeTop)
+            {
+                switch (direction)
+                {
+                    case 0:
+                        answer = limit - age + 1;
+                        break;
+                    case 1:
+                        //answer = 100 - (targetAgeTop - targetAgeButtom) - (100 - age);
+                        answer = targetAgeButtom - targetAgeTop + age - 1;
+                        break;
+                    default:
+                        break;
+                }
+            }
+            else if (age < targetAgeButtom)
+            {
+                switch (direction)
+                {
+                    case 0:
+                        answer = 100 - (targetAgeTop - targetAgeButtom) - age;
+                        break;
+                    case 1:
+                        answer = age;
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            return answer; ;
+        }
+
+        /// <summary>
+        /// 計算職業分數
+        /// </summary>
+        /// <param name="job">民眾職業</param>
+        /// <param name="job_dict">職業權重表</param>
+        ///  /// <param name="limit">預設值(預設為滿)</param>
+        /// <returns></returns>
+        public static double GetJobScore(string job, Dictionary<string, double> job_dict, int limit = 100)
+        {
+            if (true == (job_dict.ContainsKey(job)))
+            {
+                double ans = job_dict[job] * limit;
+                return ans;
+            }
+            else
+            {
+                return limit;
+            }
+
+        }
+
+        /// <summary>
+        /// 計算特殊狀態權重
+        /// </summary>
+        /// <param name="state">民眾特殊狀態</param>
+        /// <param name="state_dict">特殊狀態權重表</param>
+        /// <returns></returns>
+        public static double GetStateWeight(string state, Dictionary<string, double> state_dict)
+        {
+            if (true == (state_dict.ContainsKey(state)))
+            {
+                return state_dict[state];
+            }
+            else
+            {
+                return 1;
+            }
+        }
+
+        /// <summary>
+        /// 計算計次分數
+        /// </summary>
+        /// <param name="DoseCount">民眾要打第n劑</param>
+        /// <param name="ordinal_dict">讓要打第n劑的先</param>
+        /// <returns></returns>
+        public static int GetOrdinalScore(int DoseCount, int ordinal_dict = 1)
+        {
+            //if (DoseCount == ordinal_dict) { return 100; }
+            //if (Math.Abs(ordinal_dict - DoseCount) ==1 ) { return 80; }
+            //if (Math.Abs(ordinal_dict - DoseCount) ==2 ) { return 70; }
+            //else { return 0; }
+
+            return 100 - (Math.Abs(ordinal_dict - DoseCount) * 10);
+        }
+
+        /// <summary>
+        /// 計算地區分數
+        /// </summary>
+        /// <param name="queryCity">民眾的縣市</param>
+        /// <param name="targetCity">疫苗的縣市</param>
+        /// <param name="Area">地區模組(在TryAlg.CityModel.CreateCityModel)</param>
+        /// <returns></returns>
+        public static double GetAreaScore(string queryCity, string targetCity, List<string[]> Area)
+        {
+            int? targetArea = null;
+            int? queryArea = null;
+
+            //如果同縣市就滿分
+            if (queryCity == targetCity)
+                return 1;
+
+            //foreach (var cityList in Area)
+            for (int i = 0; i < Area.Count; i++)
+            {
+                foreach (var city in Area[i])
+                {
+                    //找targetCity是哪區，找到給區域的碼(第n輪)
+                    if (targetCity == city)
+                    {
+                        targetArea = i;
+                    }
+                    //找queryCity是哪區，找到給區域的碼(第n輪)
+                    if (queryCity == city)
+                    {
+                        queryArea = i;
+                    }
+                }
+            }
+
+            //如果區域找不到說明輸入有問題
+            if (targetArea == null || queryArea == null)
+                return 0;
+
+            //不同縣市則比對兩個區域是不是一樣，一樣就是同區不同市
+            if (targetArea == queryArea)
+                return 0.8;
+
+            return 0.5;
+        }
+
+        #endregion
+
+    }
+}
