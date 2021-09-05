@@ -16,15 +16,19 @@ namespace TryAlg
         /// <returns></returns>
         public static double GetTotalScore(UserInfo userInfo, AlgorithmParameter algP)
         {
-            int ansAge = GetAgeScore(userInfo.Age, algP.age_targetAgeButtom, algP.age_targetAgeTop, algP.age_direction);
+            //計算年齡
+            int ansAge = GetAgeScore(userInfo.Age, algP.age_direction, algP.age_targetAgeButtom, algP.age_targetAgeTop);
+            //計算職業
             double ansJob = GetJobScore(userInfo.Job, algP.job_dict);
+            //計算狀態
             double ansState = GetStateWeight(userInfo.Status, algP.state_dict);
+            //計算計次
             int ansOrdinal = GetOrdinalScore(userInfo.DoseCount, algP.ordinal_dict);
+            //計算地區
             var Area = CityModel.CreateCityModel();
             var ansArea = GetAreaScore(userInfo.Area, algP.area_area, Area);
 
-
-            //return ansArea;
+            //給出總分
             return (ansAge + ansJob + ansOrdinal) * ansState * ansArea;
         }
         #endregion
@@ -36,10 +40,10 @@ namespace TryAlg
         /// <param name="age">民眾年齡</param>
         /// <param name="targetAgeButtom">目標年齡層-底(預設0)</param>
         /// <param name="targetAgeTop">目標年齡層-頂(預設100)</param>
-        /// <param name="direction">小的先/老的先(0/1)(預設1)</param>
+        /// <param name="_direction">小的先/老的先(0/1)(預設1)</param>
         /// <param name="limit">滿分(預設100)</param>
         /// <returns></returns>
-        public static int GetAgeScore(int age, int targetAgeButtom = 0, int targetAgeTop = 100, int direction = 1, int limit = 100)
+        public static int GetAgeScore(int age, int direction, int targetAgeButtom = 0, int targetAgeTop = 100, int limit = 100)
         {
             int answer = 0;
             if (age >= targetAgeButtom && age <= targetAgeTop)
@@ -98,6 +102,7 @@ namespace TryAlg
         /// <returns></returns>
         public static double GetJobScore(string job, Dictionary<string, double> job_dict, int limit = 100)
         {
+            //如果有對應到指定職業，則分數*權重
             if (true == (job_dict.ContainsKey(job)))
             {
                 double ans = job_dict[job] * limit;
@@ -118,6 +123,7 @@ namespace TryAlg
         /// <returns></returns>
         public static double GetStateWeight(string state, Dictionary<string, double> state_dict)
         {
+            //如果有對應到指定狀態，則給出權重
             if (true == (state_dict.ContainsKey(state)))
             {
                 return state_dict[state];
@@ -131,17 +137,16 @@ namespace TryAlg
         /// <summary>
         /// 計算計次分數
         /// </summary>
-        /// <param name="DoseCount">民眾要打第n劑</param>
+        /// <param name="DoseCount">民眾打了n劑</param>
         /// <param name="ordinal_dict">讓要打第n劑的先</param>
+        /// ///  /// <param name="limit">預設值</param>
         /// <returns></returns>
-        public static int GetOrdinalScore(int DoseCount, int ordinal_dict = 1)
+        public static int GetOrdinalScore(int DoseCount, int ordinal_dict = 1, int limit = 100)
         {
-            //if (DoseCount == ordinal_dict) { return 100; }
-            //if (Math.Abs(ordinal_dict - DoseCount) ==1 ) { return 80; }
-            //if (Math.Abs(ordinal_dict - DoseCount) ==2 ) { return 70; }
-            //else { return 0; }
-
-            return 100 - (Math.Abs(ordinal_dict - DoseCount) * 10);
+            //補正: 民眾打了n劑-匹配-現在要打第n+1劑
+            DoseCount++;
+            //每相差一個劑次，就少10%優先度
+            return limit - (Math.Abs(ordinal_dict - DoseCount) * (limit / 10));
         }
 
         /// <summary>

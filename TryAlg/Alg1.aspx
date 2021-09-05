@@ -32,8 +32,8 @@
             <asp:TextBox ID="txt_age_targetAgeButtom" runat="server"></asp:TextBox><br />
             <asp:Label ID="Label3" runat="server" Text="目標年齡-頂" TextMode="Number"></asp:Label>
             <asp:TextBox ID="txt_age_targetAgeTop" runat="server"></asp:TextBox><br />
-            <asp:Label ID="Label4" runat="server" Text="小的先/老的先(0/1)" TextMode="Number"></asp:Label>
-            <asp:TextBox ID="txt_age_direction" runat="server"></asp:TextBox><br />
+            <asp:Label ID="Label4" runat="server" Text="小的先/老的先(0/1)" ></asp:Label>
+            <asp:TextBox ID="txt_age_direction" runat="server" TextMode="Number"></asp:TextBox><br />
             <asp:Label ID="Label10" runat="server" Text="讓要打第n劑的先" TextMode="Number"></asp:Label>
             <asp:TextBox ID="txt_ordinal" runat="server" TextMode="Number"></asp:TextBox><br />
             <asp:Label ID="Label13" runat="server" Text="地區"></asp:Label>
